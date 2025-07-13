@@ -1,0 +1,15 @@
+.container-fluid{
+    background-color: aqua;
+    border: 6px solid black;
+    
+}
+.row{
+    border: 6px solid red;
+}
+.col-7{
+   
+    border: 6px solid rgb(29, 24, 129);
+}
+.image{
+    padding: 1.5cm;
+}

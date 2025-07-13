@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Task Streak Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+           background: linear-gradient(to right, #e0eafc, #cfdef3);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    h1 {
+      text-align: center;
+      color: #5a4bd8;
+      margin-bottom: 20px;
+    }
+
+    #backBtn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: #636e72;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    #backBtn:hover {
+      background: #2d3436;
+    }
+
+    #goToTrackBtn {
+      background:  #5a4bd8;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 50px;
+      cursor: pointer;
+      display: block;
+      margin: 0 auto 30px;
+      transition: 0.3s;
+    }
+
+    #goToTrackBtn:hover {
+      opacity: 0.9;
+      transform: scale(1.03);
+    }
+
+    .task {
+      margin-bottom: 30px;
+    }
+
+    .task-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #2d3436;
+    }
+
+    .streak-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      font-size: 14px;
+    }
+
+    .day {
+      width: 28px;
+      height: 28px;
+      text-align: center;
+      line-height: 28px;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+    }
+
+    .present {
+      background-color: #00b894;
+    }
+
+    .missed {
+      background-color: #d63031;
+    }
+
+    .tooltip {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .tooltip:hover::after {
+      content: attr(data-date);
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2d3436;
+      color: white;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .no-tasks {
+      text-align: center;
+      color: #636e72;
+      margin-top: 40px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2d3436;
+      margin-top: 50px;
+    }
+
+    canvas {
+      margin-top: 20px;
+      max-width: 100%;
+    }
+
+    @media (max-width: 600px) {
+      .streak-line {
+        gap: 3px;
+        font-size: 12px;
+      }
+
+      .day {
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+      }
+
+      #goToTrackBtn {
+        font-size: 15px;
+        padding: 10px 20px;
+      }
+
+      #backBtn {
+        font-size: 13px;
+        padding: 6px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button id="backBtn">← Back</button>
+    <h1>Task Streak Tracker</h1>
+
+    <button id="goToTrackBtn"> Go to Tracker</button>
+
+    <div id="taskList"></div>
+    <div id="noTasks" class="no-tasks">Loading tasks...</div>
+
+    <h2>Task Completion Chart</h2>
+    <canvas id="streakChart" height="200"></canvas>
+
+    <h2>Progress Over Time</h2>
+    <canvas id="progressChart" height="200"></canvas>
+  </div>
+
+  <script>
+    function formatDateLocal(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+        .toLocaleDateString('en-CA');
+    }
+
+    function generateDateRange(start, end) {
+      let dates = [];
+      let current = new Date(start);
+      end = new Date(end);
+      while (current <= end) {
+        dates.push(formatDateLocal(current));
+        current.setDate(current.getDate() + 1);
+      }
+      return dates;
+    }
+
+    function renderStreakLine(dates, presentMap) {
+      const line = document.createElement("div");
+      line.className = "streak-line";
+
+      dates.forEach(date => {
+        const span = document.createElement("div");
+        span.className = "day tooltip";
+        span.setAttribute("data-date", date);
+
+        if (presentMap[date]) {
+          span.classList.add("present");
+          span.innerText = "✔";
+        } else {
+          span.classList.add("missed");
+          span.innerText = "✘";
+        }
+
+        line.appendChild(span);
+      });
+
+      return line;
+    }
+
+    function renderTasks(tasks) {
+      const taskList = document.getElementById("taskList");
+      const noTasks = document.getElementById("noTasks");
+
+      if (!tasks.length) {
+        noTasks.innerText = "No tasks found.";
+        return;
+      }
+
+      noTasks.style.display = "none";
+
+      tasks.forEach(task => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "task";
+
+        const title = document.createElement("div");
+        title.className = "task-title";
+        title.innerText = `${task.title} (${task.start_date} → ${task.end_date})`;
+
+        const allDates = generateDateRange(task.start_date, task.end_date);
+        const presentMap = {};
+        (task.dates || []).forEach(d => presentMap[d.date] = d.present);
+
+        const streakLine = renderStreakLine(allDates, presentMap);
+
+        wrapper.appendChild(title);
+        wrapper.appendChild(streakLine);
+        taskList.appendChild(wrapper);
+      });
+    }
+
+    function drawChart(tasks) {
+      const ctx = document.getElementById("streakChart").getContext("2d");
+
+      const labels = tasks.map(task => task.title);
+      const data = tasks.map(task => {
+        const dateRange = generateDateRange(task.start_date, task.end_date);
+        const totalDays = dateRange.length;
+
+        const presentDates = (task.dates || []).filter(d => d.present).map(d => d.date);
+        const presentSet = new Set(presentDates);
+        const presentCount = dateRange.filter(date => presentSet.has(date)).length;
+
+        return totalDays ? Math.round((presentCount / totalDays) * 100) : 0;
+      });
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "% Completed",
+            data,
+            backgroundColor: "rgba(52, 152, 219, 0.6)",
+            borderColor: "rgba(41, 128, 185, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                stepSize: 10,
+                callback: value => value + "%"
+              }
+            }
+          },
+          plugins: {
+            legend: { display: true },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.parsed.y}% complete`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function drawProgressChart(tasks) {
+      const allDatesSet = new Set();
+      tasks.forEach(task => {
+        generateDateRange(task.start_date, task.end_date).forEach(date => allDatesSet.add(date));
+      });
+
+      const allDates = Array.from(allDatesSet).sort();
+      const dateCountMap = {};
+      allDates.forEach(date => dateCountMap[date] = 0);
+
+      tasks.forEach(task => {
+        (task.dates || []).forEach(entry => {
+          if (entry.present && dateCountMap.hasOwnProperty(entry.date)) {
+            dateCountMap[entry.date]++;
+          }
+        });
+      });
+
+      const counts = allDates.map(date => dateCountMap[date]);
+
+      new Chart(document.getElementById("progressChart").getContext("2d"), {
+        type: "line",
+        data: {
+          labels: allDates,
+          datasets: [{
+            label: "Tasks Marked Present",
+            data: counts,
+            fill: true,
+            borderColor: "#6c5ce7",
+            backgroundColor: "rgba(108, 92, 231, 0.1)",
+            tension: 0.3,
+            pointBackgroundColor: "#6c5ce7"
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              stepSize: 1
+            }
+          },
+          plugins: {
+            legend: { display: true },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.parsed.y} task(s) on ${ctx.label}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    const email = localStorage.getItem("userEmail");
+    fetch("http://localhost/task_tracker/api/get_tasks.php?email=" + encodeURIComponent(email))
+      .then(res => res.json())
+      .then(tasks => {
+        renderTasks(tasks);
+        drawChart(tasks);
+        drawProgressChart(tasks);
+      })
+      .catch(err => {
+        console.error("Failed to fetch tasks:", err);
+        document.getElementById("noTasks").innerText = "Failed to load tasks.";
+      });
+
+    document.getElementById("goToTrackBtn").onclick = () => {
+      window.location.href = "track.html";
+    };
+
+    document.getElementById("backBtn").onclick = () => {
+      window.location.href = "dashboard.html";
+    };
+  </script>
+</body>
+</html>

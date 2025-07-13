@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Task Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px 20px;
+      margin-top: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    #logoutBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #d63031;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    #logoutBtn:hover {
+      background: #c0392b;
+    }
+
+    #backBtn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: #636e72;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    #backBtn:hover {
+      background: #2d3436;
+    }
+
+    h1 {
+      text-align: center;
+      color: #4a4e69;
+      margin-bottom: 10px;
+      font-size: 26px;
+    }
+
+    .streak, .notify-toggle {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #6c5ce7;
+    }
+
+    #addTaskBtn,
+    #goToLeaderboardBtn {
+      background: #4b59b1;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 50px;
+      cursor: pointer;
+      display: block;
+      margin: 0 auto 20px;
+      transition: 0.3s;
+    }
+
+    #addTaskBtn:hover,
+    #goToLeaderboardBtn:hover {
+      opacity: 0.9;
+      transform: scale(1.03);
+    }
+
+    #taskForm {
+      display: none;
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 10px;
+      background-color: #f3f3f3;
+    }
+
+    #taskForm input,
+    #taskForm button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    #saveTaskBtn {
+      background-color: #6c5ce7;
+      color: white;
+      border: none;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    #saveTaskBtn:hover {
+      background-color: #5a4bd8;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2d3436;
+      margin-bottom: 15px;
+      font-size: 22px;
+    }
+
+    .task {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      position: relative;
+      transition: 0.3s;
+    }
+
+    .task:hover {
+      transform: scale(1.01);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .task-title {
+      font-weight: 600;
+      color: #4a4e69;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #ff6b6b;
+      border: none;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    .delete-btn:hover { background-color: #ee5253; }
+
+    .dates {
+      margin-top: 10px;
+      padding-left: 5px;
+    }
+
+    .date-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      background: #f1f2f6;
+      border: 1px solid #dfe4ea;
+      border-radius: 6px;
+      padding: 10px;
+      margin: 6px 0;
+      font-size: 15px;
+    }
+
+    .date-item.present {
+      background: #dfe6e9;
+      border-left: 4px solid #00b894;
+    }
+
+    .date-item button {
+      background: #00cec9;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-top: 5px;
+    }
+
+    .date-item button:hover {
+      background: #00b894;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 600px) {
+      #logoutBtn {
+        top: 10px;
+        right: 10px;
+        font-size: 13px;
+        padding: 6px 12px;
+      }
+      #backBtn {
+        top: 10px;
+        left: 10px;
+        font-size: 13px;
+        padding: 6px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button id="logoutBtn">Logout</button>
+    <button id="backBtn">← Back</button>
+    <h1>My Task Tracker</h1>
+    <div class="streak"> Streak: <span id="streakCount">0</span> days</div>
+
+    <button id="addTaskBtn">+ Add Task</button>
+
+    <div id="taskForm">
+      <input type="text" id="taskTitle" placeholder="Task Title" required/>
+      <input type="date" id="startDate" required/>
+      <input type="date" id="endDate" required/>
+      <button id="saveTaskBtn">Save Task</button>
+    </div>
+
+    <h2>Tasks</h2>
+    <div id="calendar"></div>
+
+    <div class="notify-toggle">
+      <label><input type="checkbox" id="notifyToggle">  Enable Daily Reminders</label>
+    </div>
+
+    <button id="goToLeaderboardBtn"> View Leaderboard</button>
+  </div>
+
+  <!-- Inside your <script> tag at the bottom -->
+
+<script>
+  let tasks = [];
+  const email = localStorage.getItem("userEmail");
+
+  function generateDateRange(start, end) {
+    let dates = [];
+    let current = new Date(start);
+    end = new Date(end);
+    while (current <= end) {
+      dates.push({ date: current.toISOString().split('T')[0], present: false });
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  }
+
+  function updateStreak() {
+    let maxStreak = 0;
+    tasks.forEach(task => {
+      let streak = 0;
+      task.dates.forEach((d, i) => {
+        if (d.present) {
+          streak = (i === 0 || task.dates[i - 1].present) ? streak + 1 : 1;
+          maxStreak = Math.max(maxStreak, streak);
+        } else {
+          streak = 0;
+        }
+      });
+    });
+    const streakEl = document.getElementById("streakCount");
+    if (streakEl) streakEl.innerText = maxStreak;
+  }
+
+  function saveTaskToServer(task) {
+    return fetch("http://localhost/task_tracker/api/save_task.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...task, email })
+    });
+  }
+
+  function updateTaskInServer(task) {
+    return fetch("http://localhost/task_tracker/api/update_task.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task_id: task.id, dates: task.dates })
+    });
+  }
+
+  function deleteTaskFromServer(id) {
+    return fetch("http://localhost/task_tracker/api/delete_task.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task_id: id })
+    });
+  }
+
+  function renderTasks() {
+    const calendar = document.getElementById("calendar");
+    calendar.innerHTML = "";
+
+    if (tasks.length === 0) {
+      calendar.innerHTML = "<p style='text-align:center;color:#636e72;'>No tasks added yet.</p>";
+      return;
+    }
+
+    tasks.forEach((task, index) => {
+      const taskDiv = document.createElement("div");
+      taskDiv.className = "task";
+
+      const titleDiv = document.createElement("div");
+      titleDiv.className = "task-title";
+      titleDiv.innerHTML = `<strong>${task.title}</strong><br><small>${task.start_date} → ${task.end_date}</small>`;
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.innerText = "Delete";
+      deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        deleteTaskFromServer(task.id).then(() => {
+          tasks.splice(index, 1);
+          renderTasks();
+          updateStreak();
+        });
+      };
+
+      const datesDiv = document.createElement("div");
+      datesDiv.className = "dates hidden";
+
+      task.dates.forEach(d => {
+        const dateEl = document.createElement("div");
+        dateEl.className = "date-item" + (d.present ? " present" : "");
+        dateEl.innerHTML = `<span>${d.date}</span><button>Mark Present</button>`;
+
+        dateEl.querySelector("button").onclick = (e) => {
+          e.stopPropagation();
+          const today = new Date().toISOString().split('T')[0];
+          if (d.date !== today) {
+            alert("You can only mark today as present.");
+            return;
+          }
+          d.present = true;
+          updateTaskInServer(task).then(() => {
+            renderTasks();
+            updateStreak();
+          });
+        };
+
+        datesDiv.appendChild(dateEl);
+      });
+
+      titleDiv.onclick = () => {
+        datesDiv.classList.toggle("hidden");
+      };
+
+      taskDiv.appendChild(titleDiv);
+      taskDiv.appendChild(deleteBtn);
+      taskDiv.appendChild(datesDiv);
+      calendar.appendChild(taskDiv);
+    });
+
+    updateStreak();
+    checkForTodayTasks();
+  }
+
+  document.getElementById("addTaskBtn").onclick = () => {
+    const form = document.getElementById("taskForm");
+    form.style.display = form.style.display === "none" || form.style.display === "" ? "block" : "none";
+  };
+
+  document.getElementById("saveTaskBtn").onclick = () => {
+    const title = document.getElementById("taskTitle").value.trim();
+    const startDate = document.getElementById("startDate").value;
+    const endDate = document.getElementById("endDate").value;
+
+    if (!title || !startDate || !endDate) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    if (startDate > endDate) {
+      alert("Start date must be before end date.");
+      return;
+    }
+
+    const dates = generateDateRange(startDate, endDate);
+    const task = { title, start_date: startDate, end_date: endDate, dates };
+
+    saveTaskToServer(task).then(() => {
+      fetchTasks();
+    });
+
+    document.getElementById("taskTitle").value = "";
+    document.getElementById("startDate").value = "";
+    document.getElementById("endDate").value = "";
+    document.getElementById("taskForm").style.display = "none";
+  };
+
+  function checkForTodayTasks() {
+    const notifyToggle = document.getElementById("notifyToggle");
+    const notifyEnabled = notifyToggle && notifyToggle.checked;
+    if (!notifyEnabled || Notification.permission !== "granted") return;
+
+    const today = new Date().toISOString().split("T")[0];
+    let hasTask = false;
+
+    tasks.forEach(task => {
+      task.dates?.forEach(dateObj => {
+        if (dateObj.date === today && !dateObj.present) {
+          hasTask = true;
+        }
+      });
+    });
+
+    if (hasTask && localStorage.getItem("lastNotifyDate") !== today) {
+      new Notification(" Reminder: Don’t forget to mark today’s task!");
+      localStorage.setItem("lastNotifyDate", today);
+    }
+  }
+
+  function fetchTasks() {
+    fetch("http://localhost/task_tracker/api/get_tasks.php?email=" + email)
+      .then(res => res.json())
+      .then(data => {
+        tasks = data;
+        renderTasks();
+      });
+  }
+
+  document.getElementById("goToLeaderboardBtn").onclick = () => {
+    window.location.href = "leaderboard.html";
+  };
+
+  document.getElementById("logoutBtn").onclick = () => {
+    localStorage.clear();
+    window.location.href = "index.html";
+  };
+
+  document.getElementById("backBtn").onclick = () => {
+    window.location.href = "dashboard.html";
+  };
+
+  // ✅ Prevent past date selection
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("startDate").setAttribute("min", today);
+  document.getElementById("endDate").setAttribute("min", today);
+
+  if (document.getElementById("notifyToggle")) {
+    document.getElementById("notifyToggle").checked = localStorage.getItem("notify") === "true";
+    document.getElementById("notifyToggle").addEventListener("change", function () {
+      localStorage.setItem("notify", this.checked);
+      if (this.checked && Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
+    });
+  }
+
+  fetchTasks();
+</script>
+
+</body>
+</html>
