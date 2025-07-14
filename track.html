@@ -352,10 +352,13 @@
         dateEl.querySelector("button").onclick = (e) => {
           e.stopPropagation();
           const today = new Date().toISOString().split('T')[0];
-          if (d.date !== today) {
+          const taskDate = new Date(d.date).toISOString().split('T')[0];
+
+          if (taskDate !== today) {
             alert("You can only mark today as present.");
             return;
           }
+
           d.present = true;
           updateTaskInServer(task).then(() => {
             renderTasks();
@@ -363,8 +366,9 @@
           });
         };
 
-        datesDiv.appendChild(dateEl);
-      });
+  datesDiv.appendChild(dateEl);
+});
+
 
       titleDiv.onclick = () => {
         datesDiv.classList.toggle("hidden");
@@ -457,7 +461,7 @@
     window.location.href = "dashboard.html";
   };
 
-  // ✅ Prevent past date selection
+  // Prevent past date selection
   const today = new Date().toISOString().split("T")[0];
   document.getElementById("startDate").setAttribute("min", today);
   document.getElementById("endDate").setAttribute("min", today);
